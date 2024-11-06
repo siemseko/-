@@ -3,87 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
+    <title>Product List</title>
     <style>
-        /* Basic styling for the form */
         body {
             font-family: Arial, sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
             background-color: #f4f4f4;
         }
         .container {
-            padding: 20px;
-            max-width: 400px;
+            max-width: 800px;
+            margin-top: 50px;
             background-color: #fff;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         h2 {
             text-align: center;
         }
-        input[type="text"],
-        input[type="password"],
-        input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+        .product {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
         }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            border: none;
-            color: #fff;
-            font-size: 16px;
-            border-radius: 4px;
-            cursor: pointer;
+        .product img {
+            width: 100px;
+            height: 100px;
+            margin-right: 20px;
+            border-radius: 8px;
+            object-fit: cover;
         }
-        button:hover {
-            background-color: #218838;
+        .product-info {
+            flex-grow: 1;
+        }
+        .product-info h3 {
+            margin: 0 0 5px;
+        }
+        .product-info p {
+            margin: 0;
+            color: #555;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Register</h2>
-        <form id="registerForm">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <input type="file" name="image" required>
-            <button type="submit">Register</button>
-        </form>
-        <p id="responseMessage"></p>
+        <h2>Product List</h2>
+        <div id="productList"></div>
     </div>
 
     <script>
-        document.getElementById('registerForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
+        // Fetch product data from the API
+        fetch('http://localhost:7100/products')
+            .then(response => response.json())
+            .then(data => {
+                const productList = document.getElementById('productList');
+                productList.innerHTML = ''; // Clear any previous content
 
-            const formData = new FormData(this); // Gather form data including file upload
+                data.forEach(product => {
+                    const productDiv = document.createElement('div');
+                    productDiv.classList.add('product');
 
-            try {
-                const response = await fetch('http://localhost:7100/api/auth/register', {
-                    method: 'POST',
-                    body: formData
+                    // Product image
+                    const productImage = document.createElement('img');
+                    productImage.src = `http://localhost:7100/uploads/${product.image}`; // Assuming 'uploads' is the directory for images
+                    productImage.alt = product.name;
+
+                    // Product info
+                    const productInfo = document.createElement('div');
+                    productInfo.classList.add('product-info');
+
+                    const productName = document.createElement('h3');
+                    productName.textContent = product.name;
+
+                    const productPrice = document.createElement('p');
+                    productPrice.textContent = `Price: $${product.price}`;
+
+                    // Append all elements
+                    productInfo.appendChild(productName);
+                    productInfo.appendChild(productPrice);
+                    productDiv.appendChild(productImage);
+                    productDiv.appendChild(productInfo);
+
+                    productList.appendChild(productDiv);
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    document.getElementById('responseMessage').textContent = `User registered successfully! Image URL: ${result.user.imageUrl}`;
-                } else {
-                    document.getElementById('responseMessage').textContent = result.message || 'Registration failed.';
-                }
-            } catch (error) {
-                document.getElementById('responseMessage').textContent = 'Error: Unable to connect to the server.';
-            }
-        });
+            })
+            .catch(error => {
+                console.error('Error fetching product data:', error);
+                const productList = document.getElementById('productList');
+                productList.innerHTML = '<p>Failed to load products. Please try again later.</p>';
+            });
     </script>
 </body>
 </html>
